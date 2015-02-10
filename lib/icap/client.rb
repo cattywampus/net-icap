@@ -43,18 +43,15 @@ module ICAP
     end
 
     def options(service, params = {})
-      method = 'OPTIONS'
       uri = URI("icap:\/\/#{address}:#{port}\/#{service.gsub(/^\//, '')}?#{to_query(params)}")
-      request = "#{method} #{uri.to_s} ICAP/1.0\r\n"
-      request << "Host: #{address}\r\n"
-      request << "\r\n"
+      req  = ICAP::Request.new('OPTIONS', uri,)
+      request(req)
+    end
 
+    def request(req, body = nil, &block)
       connect
-
-      @socket.send(request, 0)
-
+      req.exec(@socket)
       response = @socket.recv(32767)
-
       finish
 
       response
@@ -63,10 +60,12 @@ module ICAP
     def to_query(params)
       params.collect { |key, value| encode(key, value) }.sort.join('&')
     end
+    private :to_query
 
     def encode(key, value)
       require 'cgi' unless defined?(CGI) && defined?(CGI::escape)
       "#{CGI.escape(key.to_s)}=#{CGI.escape(value.to_s)}"
     end
+    private :encode
   end
 end

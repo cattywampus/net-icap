@@ -23,7 +23,30 @@ module ICAP::Header
     end
     @header[key.downcase] = [val]
   end
-
+  
+  # [Ruby 1.8.3]
+  # Adds a value to a named header field, instead of replacing its value.
+  # Second argument +val+ must be a String.
+  # See also #[]=, #[] and #get_fields.
+  #
+  #   request.add_field 'X-My-Header', 'a'
+  #   p request['X-My-Header']              #=> "a"
+  #   p request.get_fields('X-My-Header')   #=> ["a"]
+  #   request.add_field 'X-My-Header', 'b'
+  #   p request['X-My-Header']              #=> "a, b"
+  #   p request.get_fields('X-My-Header')   #=> ["a", "b"]
+  #   request.add_field 'X-My-Header', 'c'
+  #   p request['X-My-Header']              #=> "a, b, c"
+  #   p request.get_fields('X-My-Header')   #=> ["a", "b", "c"]
+  #
+  def add_field(key, val)
+    if @header.key?(key.downcase)
+      @header[key.downcase].push val
+    else
+      @header[key.downcase] = [val]
+    end
+  end
+  
   # Iterates through the header names and values, passing in the name
   # and value to the code block supplied
   #

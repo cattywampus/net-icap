@@ -26,7 +26,7 @@ module ICAP
     end
 
     def connect
-      @socket = Timeout.timeout(@open_timeout, Net::OpenTimeout) {
+      s = Timeout.timeout(@open_timeout, Net::OpenTimeout) {
         begin
           TCPSocket.open(address, port)
         rescue => e
@@ -34,6 +34,7 @@ module ICAP
             "#{address}:#{port} (#{e.message})"
         end
       }
+      @socket = Net::BufferedIO.new(s)
     end
     private :connect
 
@@ -51,7 +52,7 @@ module ICAP
     def request(req, body = nil, &block)
       connect
       req.exec(@socket)
-      response = @socket.recv(32767)
+      response = ICAP::Response.read_new(@socket)
       finish
 
       response

@@ -1,6 +1,7 @@
 require 'uri/icap'
 require 'icap/client'
 require 'icap/header'
+require 'icap/response'
 require 'icap/request'
 require 'icap/version'
 

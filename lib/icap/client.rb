@@ -44,11 +44,17 @@ module ICAP
     end
 
     def options(service, params = {})
-      uri = URI("icap:\/\/#{address}:#{port}\/#{service.gsub(/^\//, '')}?#{to_query(params)}")
-      req  = ICAP::Request.new('OPTIONS', uri,)
+      req  = ICAP::Request.new('OPTIONS', uri(service, params))
       request(req)
     end
 
+    def respmod(service, body = nil, params = {})
+      req = ICAP::Request.new('RESPMOD', uri(service, params))
+      req.body = body
+      
+      request(req)
+    end
+    
     def request(req, body = nil, &block)
       connect
       req.exec(@socket)
@@ -58,6 +64,11 @@ module ICAP
       response
     end
 
+    def uri(service, params)
+      URI("icap:\/\/#{address}:#{port}\/#{service.gsub(/^\//, '')}?#{to_query(params)}")
+    end
+    private :uri
+    
     def to_query(params)
       params.collect { |key, value| encode(key, value) }.sort.join('&')
     end

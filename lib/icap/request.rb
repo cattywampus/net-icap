@@ -34,7 +34,7 @@ class ICAP::Request
   attr_reader :uri
 
   attr_accessor :body
-
+  
   def inspect
     "\#<#{self.class} #{@method}>"
   end
@@ -48,10 +48,32 @@ class ICAP::Request
   end
 
   private
+  
+  class Chunker #:nodoc:
+    def initialize(sock)
+      @sock = sock
+      @prev = nil
+    end
 
+    def write(buf)
+      # avoid memcpy() of buf, buf can huge and eat memory bandwidth
+      @sock.write("#{buf.bytesize.to_s(16)}\r\n")
+      rv = @sock.write(buf)
+      @sock.write("\r\n")
+      rv
+    end
+
+    def finish
+      @sock.write("0\r\n\r\n")
+    end
+  end
+  
   def send_request(socket, body)
+    self['Encapsulated'] = 'res-body=0'
     write_header socket
-    socket.write body
+    chunker = Chunker.new(socket)
+    chunker.write(body)
+    chunker.finish
   end
 
   def write_header(socket)

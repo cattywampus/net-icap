@@ -19,12 +19,46 @@ module ICAP
       @open_timeout = nil
       @started = false
       @socket = nil
+      @started = false
     end
 
     def inspect
-      "#<#{self.class} #{@address}:#{@port}>"
+      "#<#{self.class} #{@address}:#{@port} open=#{started?}>"
+    end
+    
+    def started?
+      @started
+    end
+    
+    # Opens a TCP connection and ICAP session.
+    #
+    # When this method is called with a block, it passes the ICAP::Client
+    # object to the block, and closes the TCP connection and ICAP session
+    # after the block has been executed.
+    #
+    # When called with a block, it returns the return value of the
+    # block; otherwise, it returns self.
+    #
+    def start  # :yield: http
+      raise IOError, 'ICAP session already opened' if @started
+      if block_given?
+        begin
+          do_start
+          return yield(self)
+        ensure
+          do_finish
+        end
+      end
+      do_start
+      self
     end
 
+    def do_start
+      connect
+      @started = true
+    end
+    private :do_start
+    
     def connect
       s = Timeout.timeout(@open_timeout, Net::OpenTimeout) {
         begin
@@ -38,30 +72,50 @@ module ICAP
     end
     private :connect
 
+    # Finishes the ICAP session and closes the TCP connection.
+    # Raises IOError if the session has not been started.
     def finish
+      raise IOError, 'ICAP session not yet started' unless started?
+      do_finish
+    end
+
+    def do_finish
+      @started = false
       @socket.close if @socket and not @socket.closed?
       @socket = nil
     end
+    private :do_finish
 
     def options(service, params = {})
       req  = ICAP::Request.new('OPTIONS', uri(service, params))
-      request(req)
+      start do |icap|
+        icap.request(req)
+      end
     end
 
-    def respmod(service, body = nil, params = {})
+    def respmod(service, body = nil, preview_size = nil, params = {})
       req = ICAP::Request.new('RESPMOD', uri(service, params))
-      req.body = body
-      
-      request(req)
+      start do |icap|
+        if preview_size && preview_size < body.size
+          req.preview = preview_size
+          req.body = body[0,preview_size]
+          preview_response = icap.request(req)
+          if preview_response.code == "100"
+            req.continue(@socket, body[preview_size,body.size-preview_size])
+            ICAP::Response.read_new(@socket)
+          else
+            preview_response
+          end
+        else
+          req.body = body
+          request(req)
+        end
+      end
     end
     
     def request(req, body = nil, &block)
-      connect
       req.exec(@socket)
-      response = ICAP::Response.read_new(@socket)
-      finish
-
-      response
+      ICAP::Response.read_new(@socket)
     end
 
     def uri(service, params)

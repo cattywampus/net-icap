@@ -27,6 +27,8 @@ class ICAP::Request
     self['Host'] ||= host if host
 
     @body = nil
+    
+    @preview = nil
   end
 
   attr_reader :method
@@ -35,18 +37,30 @@ class ICAP::Request
 
   attr_accessor :body
   
+  attr_reader :preview
+  
   def inspect
     "\#<#{self.class} #{@method}>"
   end
 
   def exec(socket)
     if @body
-      send_request socket, @body
+      send_header(socket)
+      send_body(socket, @body)
     else
-      write_header socket
+      write_header(socket)
     end
   end
+  
+  def continue(socket, body)
+    send_body(socket, body)
+  end
 
+  def preview=(bytes)
+    raise ArgumentError, "ICAP Preview #{bytes || 'nil'} bytes must be >= 0" if bytes.nil? || bytes < 0
+    @preview = self['preview'] = bytes
+  end
+  
   private
   
   class Chunker #:nodoc:
@@ -68,12 +82,15 @@ class ICAP::Request
     end
   end
   
-  def send_request(socket, body)
-    self['Encapsulated'] = 'res-body=0'
-    write_header socket
+  def send_body(socket, body)
     chunker = Chunker.new(socket)
     chunker.write(body)
     chunker.finish
+  end
+  
+  def send_header(socket)
+    self['Encapsulated'] = 'res-body=0'
+    write_header(socket)
   end
 
   def write_header(socket)

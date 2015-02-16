@@ -14,7 +14,6 @@ class ICAP::Response
     
     def read_status_line(socket)
       status = socket.readline
-      puts "response status = #{status}"
       m = /\AICAP\/1\.0\s+(\d\d\d)(?:\s+(.*))?\z/in.match(status)
       m.captures
     end

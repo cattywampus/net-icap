@@ -1,4 +1,4 @@
-require 'socket'
+require 'net/protocol'
 require 'uri'
 
 module ICAP
@@ -25,11 +25,11 @@ module ICAP
     def inspect
       "#<#{self.class} #{@address}:#{@port} open=#{started?}>"
     end
-    
+
     def started?
       @started
     end
-    
+
     # Opens a TCP connection and ICAP session.
     #
     # When this method is called with a block, it passes the ICAP::Client
@@ -58,9 +58,9 @@ module ICAP
       @started = true
     end
     private :do_start
-    
+
     def connect
-      s = Timeout.timeout(@open_timeout, Net::OpenTimeout) {
+      s = Timeout.timeout(@open_timeout, ::Net::OpenTimeout) {
         begin
           TCPSocket.open(address, port)
         rescue => e
@@ -68,7 +68,7 @@ module ICAP
             "#{address}:#{port} (#{e.message})"
         end
       }
-      @socket = Net::BufferedIO.new(s)
+      @socket = ::Net::BufferedIO.new(s)
     end
     private :connect
 
@@ -112,7 +112,7 @@ module ICAP
         end
       end
     end
-    
+
     def request(req, body = nil, &block)
       req.exec(@socket)
       ICAP::Response.read_new(@socket)
@@ -122,7 +122,7 @@ module ICAP
       URI("icap:\/\/#{address}:#{port}\/#{service.gsub(/^\//, '')}?#{to_query(params)}")
     end
     private :uri
-    
+
     def to_query(params)
       params.collect { |key, value| encode(key, value) }.sort.join('&')
     end

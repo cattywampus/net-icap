@@ -60,14 +60,7 @@ module ICAP
     private :do_start
 
     def connect
-      s = Timeout.timeout(@open_timeout, ::Net::OpenTimeout) {
-        begin
-          TCPSocket.open(address, port)
-        rescue => e
-          raise e, "Failed to open TCP connection to " +
-            "#{address}:#{port} (#{e.message})"
-        end
-      }
+      s = timeout(@open_timeout) { TCPSocket.open(address, port) }
       @socket = ::Net::BufferedIO.new(s)
     end
     private :connect

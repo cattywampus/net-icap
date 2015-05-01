@@ -1,10 +1,10 @@
 # coding: utf-8
 lib = File.expand_path('../lib', __FILE__)
 $LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
-require 'icap/version'
+require 'net/icap/version'
 
 Gem::Specification.new do |spec|
-  spec.name          = "icap"
+  spec.name          = "net-icap"
   spec.version       = ICAP::VERSION
   spec.authors       = ["Keith Walters"]
   spec.email         = ["keith.walters@cattywamp.us"]
@@ -20,4 +20,7 @@ Gem::Specification.new do |spec|
 
   spec.add_development_dependency "bundler", "~> 1.6"
   spec.add_development_dependency "rake"
+  spec.add_development_dependency "rspec", "~> 3.1"
+  spec.add_development_dependency "guard-rspec"
+  spec.add_development_dependency "byebug"
 end

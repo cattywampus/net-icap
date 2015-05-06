@@ -50,6 +50,16 @@ module Net
       expect(request['host']).to eq 'anyhost:1234'
     end
 
+    it "parses Preview from header" do
+      request = ICAPRequest.new 'METHOD', false, uri, { 'preview' => '100' }
+      expect(request.preview).to eq 100
+    end
+
+    it "raises error when Preview is invalid" do
+      request = ICAPRequest.new 'METHOD', false, uri, { 'preview' => 'invalid' }
+      expect { request.preview }.to raise_error(Net::ICAPHeaderSyntaxError)
+    end
+
     it "writes a simple header to the socket" do
       request = ICAPRequest.new 'OPTIONS', false, uri
       io = StringIO.new

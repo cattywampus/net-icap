@@ -41,10 +41,21 @@ class Net::ICAPRequest
     end
 
     if @body
-      send_request_with_body sock, @body
+      if preview
+        send_request_with_preview sock, @body
+      else
+        send_request_with_body sock, @body
+      end
     else
       write_header sock
     end
+  end
+
+  def preview
+    return nil unless key?('Preview')
+    preview = self['Preview'].slice(/\d+/) or
+        raise Net::ICAPHeaderSyntaxError, 'wrong Preview format'
+    preview.to_i
   end
 
   def update_uri(host, port)
@@ -80,6 +91,27 @@ class Net::ICAPRequest
     chunker = Chunker.new(sock)
     chunker.write(body)
     chunker.finish
+  end
+
+  def send_request_with_preview(sock, body)
+    write_header(sock)
+    chunker = Chunker.new(sock)
+    chunker.write(body[0,preview])
+    chunker.finish
+    res = wait_for_continue(sock)
+    chunker.write(body[preview, body.length-preview])
+    chunker.finish
+  end
+
+  def wait_for_continue(sock)
+    res = nil
+    if IO.select([sock.io], nil, nil, sock.continue_timeout)
+      res = Net::ICAPResponse.read_new(sock)
+      unless res.kind_of?(Net::ICAPContinue)
+        throw :response, res
+      end
+    end
+    res
   end
 
   def write_header(socket)

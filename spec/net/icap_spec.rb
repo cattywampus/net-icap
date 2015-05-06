@@ -40,5 +40,13 @@ module Net
       response = icap.request_respmod 'avscan', virus, { 'encapsulated' => 'res-body=0' }
       expect(response.body).not_to be_nil
     end
+
+    it "makes a RESPMOD request with a preview" do
+      body = "a" * 500
+      icap = ICAP.new 'localhost'
+      icap.set_debug_output($stdout)
+      response = icap.request_respmod 'avscan', body, { 'encapsulated' => 'res-body=0', 'preview' => '100' }
+      expect(response.body).not_to be_nil
+    end
   end
 end

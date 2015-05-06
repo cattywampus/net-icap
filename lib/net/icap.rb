@@ -1,6 +1,9 @@
 require 'byebug'
 
 module Net
+  class ICAPBadResponse < StandardError; end
+  class ICAPHeaderSyntaxError < StandardError; end
+
   class ICAP
     def ICAP.default_port
       1344

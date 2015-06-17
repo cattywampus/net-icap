@@ -98,13 +98,15 @@ module Net
     def transport_request(req)
       begin_transport(req)
 
-      req.exec(@socket)
-      res = ICAPResponse.read_new(@socket)
-      res.uri = req.uri
-      res.reading_body(@socket, req.response_body_permitted?) {
-        yield res if block_given?
+      res = catch(:response) {
+        req.exec(@socket)
+        res = ICAPResponse.read_new(@socket)
+        res.uri = req.uri
+        res.reading_body(@socket, req.response_body_permitted?) {
+          yield res if block_given?
+        }
+        res
       }
-
       end_transport(req, res)
       res
     rescue => exception

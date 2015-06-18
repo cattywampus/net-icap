@@ -4,7 +4,7 @@ $LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
 
 Gem::Specification.new do |spec|
   spec.name          = "net-icap"
-  spec.version       = "0.2.0"
+  spec.version       = "0.2.1"
   spec.authors       = ["Keith Walters"]
   spec.email         = ["keith.walters@cattywamp.us"]
   spec.summary       = %q{ICAP client library for Ruby}

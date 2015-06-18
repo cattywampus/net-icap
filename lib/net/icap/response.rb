@@ -103,8 +103,8 @@ class Net::ICAPResponse
   private
 
   def read_body_0(dest)
-    if encapsulated = self['encapsulated']
-      hdr_size = self['encapsulated'].match(/res-body=(\d+)/)[1].to_i
+    if self['encapsulated'] && self['encapsulated'] =~ /res-body=(\d+)/
+      hdr_size = $1.to_i
       @socket.read hdr_size, dest
       read_chunked dest, @socket
     else

@@ -51,6 +51,8 @@ module URI
     def initialize(*arg)
       super(*arg)
     end
+
+    alias_method :hostname, :host unless self.instance_methods.include?(:hostname)
   end
 
   @@schemes['ICAP'] = ICAP

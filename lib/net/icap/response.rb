@@ -1,5 +1,3 @@
-require 'byebug'
-
 class Net::ICAPResponse
   class << self
     def body_permitted?

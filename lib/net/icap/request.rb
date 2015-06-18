@@ -1,4 +1,3 @@
-
 class Net::ICAPRequest
 
   include Net::HTTPHeader
@@ -105,7 +104,12 @@ class Net::ICAPRequest
 
   def wait_for_continue(sock)
     res = nil
-    if IO.select([sock.io], nil, nil, sock.continue_timeout)
+    if sock.respond_to?(:continue_timeout)
+      timeout = sock.continue_timeout
+    else
+      timeout = 30
+    end
+    if IO.select([sock.io], nil, nil, timeout)
       res = Net::ICAPResponse.read_new(sock)
       unless res.kind_of?(Net::ICAPContinue)
         throw :response, res

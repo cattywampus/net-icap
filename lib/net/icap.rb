@@ -1,5 +1,3 @@
-require 'byebug'
-
 module Net
   class ICAPBadResponse < StandardError; end
   class ICAPHeaderSyntaxError < StandardError; end
@@ -90,7 +88,7 @@ module Net
 
     def uri(path)
       path = '/' + path unless path[0] == '/'
-      URI::ICAP.build hostname: address, port: port, path: path
+      URI::ICAP.build :hostname => address, :port => port, :path => path
     end
 
     private
@@ -145,7 +143,11 @@ end
 
 require 'uri/icap'
 
-require 'net/http/header'
+begin
+  require 'net/http/headers'
+rescue LoadError
+  require 'net/http'
+end
 
 require 'net/icap/request'
 
